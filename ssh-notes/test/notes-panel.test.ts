@@ -80,17 +80,17 @@ function makePanel () {
 }
 
 describe('NotesPanelComponent filtering', () => {
-  test('hides connections without notes by default', () => {
+  test('shows all connections by default', () => {
     const { panel } = makePanel()
-    panel.applyFilters()
-    expect(panel.filteredRows.map(row => row.profileId)).toEqual(['a', 'b'])
-  })
-
-  test('can show connections without notes', () => {
-    const { panel } = makePanel()
-    panel.showAll = true
     panel.applyFilters()
     expect(panel.filteredRows.map(row => row.profileId)).toEqual(['c', 'a', 'b'])
+  })
+
+  test('can hide connections without notes', () => {
+    const { panel } = makePanel()
+    panel.showAll = false
+    panel.applyFilters()
+    expect(panel.filteredRows.map(row => row.profileId)).toEqual(['a', 'b'])
   })
 
   test('searches note title, description and project', () => {
@@ -120,6 +120,6 @@ describe('NotesPanelComponent filtering', () => {
     panel.rows[1].note!.updatedAt = '2026-10-23T02:00:00.000Z'
     panel.sortMode = 'updated'
     panel.applyFilters()
-    expect(panel.filteredRows.map(row => row.profileId)).toEqual(['b', 'a'])
+    expect(panel.filteredRows.map(row => row.profileId)).toEqual(['b', 'a', 'c'])
   })
 })

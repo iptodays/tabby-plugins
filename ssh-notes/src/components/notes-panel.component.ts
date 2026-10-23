@@ -114,9 +114,10 @@ type SortMode = 'name' | 'updated' | 'environment' | 'project'
 
           <div class="ssh-notes-empty" *ngIf="!loading && !filteredRows.length">
             <span class="fa fa-note-sticky"></span>
-            <strong>还没有可显示的备注</strong>
-            <span>点击“显示无备注连接”，选择一条 SSH 连接后添加备注。</span>
-            <button type="button" class="btn btn-sm btn-primary" (click)="showAll = true; applyFilters()">
+            <strong>没有可显示的 SSH 连接</strong>
+            <span *ngIf="!showAll">勾选“显示无备注连接”，或选择已有备注的连接。</span>
+            <span *ngIf="showAll">请调整搜索或筛选条件，或确认已在 Tabby 中创建 SSH 连接。</span>
+            <button type="button" class="btn btn-sm btn-primary" *ngIf="!showAll" (click)="showAll = true; applyFilters()">
               显示全部 SSH 连接
             </button>
           </div>
@@ -257,7 +258,7 @@ export class NotesPanelComponent extends BaseComponent implements OnInit {
   tagFilter = ''
   tagSearch = ''
   sortMode: SortMode = 'name'
-  showAll = false
+  showAll = true
   loading = true
   errorMessage = ''
   allTags: string[] = []
