@@ -6,7 +6,7 @@
 
 | 插件 | 版本 | 说明 |
 | --- | --- | --- |
-| [tabby-ssh-notes](notes/README.md) | 0.1.0 | 为 SSH 连接提供本地备注、环境与标签管理、终端标签标题集成，以及 JSON 导入导出。 |
+| [tabby-ssh-notes](ssh-notes/README.md) | 0.1.0 | 为 SSH 连接提供本地备注、环境与标签管理、终端标签标题集成，以及 JSON 导入导出。 |
 
 当前仓库只包含 `tabby-ssh-notes`，后续插件会以独立目录加入。
 
@@ -14,7 +14,7 @@
 
 ```text
 tabby-plugins/
-├─ notes/                  # tabby-ssh-notes 插件
+├─ ssh-notes/              # tabby-ssh-notes 插件
 │  ├─ src/                 # 插件源码（Angular 15 + TypeScript）
 │  ├─ test/                # Jest 单元测试与本地 SSH 测试服务
 │  ├─ docs/                # 架构、开发、测试、兼容性文档
@@ -33,17 +33,17 @@ tabby-plugins/
 - Node.js 18+（实际验证 v24.22.1）与 npm
 
 ```powershell
-cd notes
+cd ssh-notes
 npm install
 npm run build
 npm run dev:install
 ```
 
-完全退出并重新启动 Tabby，然后打开 **Settings → SSH Notes**。详细使用说明见 [notes/README.md](notes/README.md)。
+完全退出并重新启动 Tabby，然后打开 **Settings → SSH Notes**。详细使用说明见 [ssh-notes/README.md](ssh-notes/README.md)。
 
 ## 开发命令
 
-在 `notes/` 目录下执行：
+在 `ssh-notes/` 目录下执行：
 
 | 命令 | 说明 |
 | --- | --- |
@@ -58,13 +58,13 @@ npm run dev:install
 
 ## 文档
 
-- [SSH Notes 使用说明](notes/README.md)
-- [技术可行性](notes/docs/TECHNICAL_FEASIBILITY.md)
-- [架构与数据流](notes/docs/ARCHITECTURE.md)
-- [开发指南](notes/docs/DEVELOPMENT.md)
-- [测试策略与验证结果](notes/docs/TESTING.md)
-- [兼容性](notes/docs/COMPATIBILITY.md)
-- [变更记录](notes/CHANGELOG.md)
+- [SSH Notes 使用说明](ssh-notes/README.md)
+- [技术可行性](ssh-notes/docs/TECHNICAL_FEASIBILITY.md)
+- [架构与数据流](ssh-notes/docs/ARCHITECTURE.md)
+- [开发指南](ssh-notes/docs/DEVELOPMENT.md)
+- [测试策略与验证结果](ssh-notes/docs/TESTING.md)
+- [兼容性](ssh-notes/docs/COMPATIBILITY.md)
+- [变更记录](ssh-notes/CHANGELOG.md)
 
 ## 许可证
 

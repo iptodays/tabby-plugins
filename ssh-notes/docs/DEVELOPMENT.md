@@ -27,7 +27,7 @@ webpack@5.89.0
 ## 2. 安装依赖
 
 ```powershell
-cd <仓库目录>\notes
+cd <仓库目录>\ssh-notes
 npm install
 ```
 

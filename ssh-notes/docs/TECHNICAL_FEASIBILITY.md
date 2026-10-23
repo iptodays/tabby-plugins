@@ -40,7 +40,7 @@ Windows 注意：加载器使用 `process.env.TABBY_PLUGINS.split(':')`，会破
 
 ```text
 %APPDATA%\tabby\plugins\node_modules\tabby-ssh-notes
-  -> <仓库目录>\notes
+  -> <仓库目录>\ssh-notes
 ```
 
 **实际验证结果**：测试实例（独立 `TABBY_CONFIG_DIRECTORY`）成功加载本插件，`window.pluginModules` 中出现 `ssh-notes`，Tabby 设置页出现 `SSH Notes`，日志中无加载错误。
