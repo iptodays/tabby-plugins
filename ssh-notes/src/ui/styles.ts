@@ -177,14 +177,28 @@ export const SSH_NOTES_STYLES = `
 }
 
 .ssh-note-baota {
-    border-top: 1px solid var(--theme-bg-more-2);
-    margin-top: .85rem;
-    padding-top: .7rem;
+    border: 1px solid var(--theme-bg-more-2);
+    border-radius: .45rem;
+    background: var(--theme-bg-more-2);
+    margin: .75rem 0;
+    padding: .65rem .7rem;
+}
+
+.ssh-note-baota-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: .35rem;
 }
 
 .ssh-note-baota-title {
     font-weight: 600;
-    margin-bottom: .35rem;
+}
+
+.ssh-note-baota .ssh-note-meta {
+    margin: 0;
 }
 
 .ssh-note-tags {
@@ -294,6 +308,31 @@ button.ssh-note-tag.active {
     color: var(--theme-danger);
 }
 
+.ssh-notes-form .ssh-notes-section {
+    margin-bottom: 0;
+}
+
+.ssh-note-baota-form {
+    background: var(--theme-bg-more);
+}
+
+.ssh-note-baota-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(9rem, 1fr);
+    gap: .7rem;
+}
+
+.ssh-note-baota-password-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.ssh-note-baota-password {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .ssh-notes-form-actions {
     display: flex;
     flex-wrap: wrap;
@@ -301,6 +340,10 @@ button.ssh-note-tag.active {
     gap: .5rem;
     border-top: 1px solid var(--theme-bg-more-2);
     padding-top: .75rem;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--theme-bg);
 }
 
 .ssh-notes-form-actions .spacer {
@@ -376,6 +419,12 @@ button.ssh-note-tag.active {
 
     .ssh-notes-list {
         max-height: 18rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .ssh-note-baota-grid {
+        grid-template-columns: 1fr;
     }
 }
 `

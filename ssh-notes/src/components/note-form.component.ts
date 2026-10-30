@@ -154,11 +154,41 @@ interface NoteDraft {
         <span class="hint">支持多行；内容不会被当作命令执行。</span>
       </div>
 
-      <div class="ssh-notes-section">
+      <div class="field">
+        <span class="field-label">标签</span>
+        <div class="ssh-note-tags" *ngIf="draft.tags.length">
+          <span class="ssh-note-tag" *ngFor="let tag of draft.tags">
+            {{ tag }}
+            <button type="button" class="btn btn-sm btn-link p-0 ms-1" (click)="removeTag(tag)" title="删除标签">×</button>
+          </span>
+        </div>
+        <div class="input-group input-group-sm">
+          <input
+            class="form-control"
+            type="text"
+            maxlength="32"
+            placeholder="输入标签后按回车"
+            [(ngModel)]="tagDraft"
+            (keydown.enter)="addTag(); $event.preventDefault()"
+          >
+          <button type="button" class="btn btn-secondary" (click)="addTag()">添加</button>
+        </div>
+        <div class="ssh-note-tags mt-2" *ngIf="filteredSuggestions().length">
+          <button
+            type="button"
+            class="ssh-note-tag"
+            *ngFor="let tag of filteredSuggestions()"
+            (click)="addSuggestedTag(tag)"
+          >+ {{ tag }}</button>
+        </div>
+        <span class="hint">最多 20 个标签，自动忽略首尾空格并防止重复。</span>
+      </div>
+
+      <div class="ssh-notes-section ssh-note-baota-form">
         <h4>宝塔面板</h4>
         <div class="section-desc">保存面板链接、用户名和密码；密码不会写入 config.yaml 或导出文件。</div>
 
-        <div class="ssh-notes-form-grid">
+        <div class="ssh-note-baota-grid">
           <div class="field">
             <label for="ssh-note-baota-url">面板链接</label>
             <input
@@ -189,10 +219,10 @@ interface NoteDraft {
 
         <div class="field">
           <label for="ssh-note-baota-password">密码</label>
-          <div class="d-flex gap-2">
+          <div class="ssh-note-baota-password-row">
             <input
               id="ssh-note-baota-password"
-              class="form-control"
+              class="form-control ssh-note-baota-password"
               type="password"
               maxlength="500"
               autocomplete="new-password"
@@ -207,36 +237,6 @@ interface NoteDraft {
           <span class="hint" *ngIf="vaultEnabled">密码保存在 Tabby 保险库中，复制时按需解锁。</span>
           <span class="hint" *ngIf="!vaultEnabled">未启用 Tabby 保险库：密码只保存在本次运行内存，重启后失效。可在 Settings → Vault 启用。</span>
         </div>
-      </div>
-
-      <div class="field">
-        <span class="field-label">标签</span>
-        <div class="ssh-note-tags" *ngIf="draft.tags.length">
-          <span class="ssh-note-tag" *ngFor="let tag of draft.tags">
-            {{ tag }}
-            <button type="button" class="btn btn-sm btn-link p-0 ms-1" (click)="removeTag(tag)" title="删除标签">×</button>
-          </span>
-        </div>
-        <div class="input-group input-group-sm">
-          <input
-            class="form-control"
-            type="text"
-            maxlength="32"
-            placeholder="输入标签后按回车"
-            [(ngModel)]="tagDraft"
-            (keydown.enter)="addTag(); $event.preventDefault()"
-          >
-          <button type="button" class="btn btn-secondary" (click)="addTag()">添加</button>
-        </div>
-        <div class="ssh-note-tags mt-2" *ngIf="filteredSuggestions().length">
-          <button
-            type="button"
-            class="ssh-note-tag"
-            *ngFor="let tag of filteredSuggestions()"
-            (click)="addSuggestedTag(tag)"
-          >+ {{ tag }}</button>
-        </div>
-        <span class="hint">最多 20 个标签，自动忽略首尾空格并防止重复。</span>
       </div>
 
       <div class="form-line d-flex align-items-center gap-3">

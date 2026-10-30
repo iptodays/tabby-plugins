@@ -201,6 +201,37 @@ type SortMode = 'name' | 'updated' | 'environment' | 'project'
             <div class="ssh-note-description" *ngIf="selectedRow.note.description">{{ selectedRow.note.description }}</div>
             <div class="text-muted" *ngIf="!selectedRow.note.description">没有详细说明。</div>
 
+            <div class="ssh-note-baota" *ngIf="hasBaota(selectedRow.note)">
+              <div class="ssh-note-baota-head">
+                <div class="ssh-note-baota-title">宝塔面板</div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button type="button" class="btn btn-sm btn-primary" [disabled]="!selectedRow.note.baotaUrl" (click)="openBaota(selectedRow)">
+                    <span class="fa fa-external-link me-1"></span>打开面板
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaUsername" (click)="copyBaotaUsername(selectedRow)">
+                    复制用户名
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaPasswordSet" (click)="copyBaotaPassword(selectedRow)">
+                    复制密码
+                  </button>
+                </div>
+              </div>
+              <div class="ssh-note-meta">
+                <div *ngIf="selectedRow.note.baotaUrl">
+                  <span class="ssh-note-meta-label">面板链接</span>
+                  <span class="ssh-notes-data-path">{{ selectedRow.note.baotaUrl }}</span>
+                </div>
+                <div *ngIf="selectedRow.note.baotaUsername">
+                  <span class="ssh-note-meta-label">用户名</span>
+                  <span>{{ selectedRow.note.baotaUsername }}</span>
+                </div>
+                <div>
+                  <span class="ssh-note-meta-label">密码</span>
+                  <span>{{ baotaPasswordStatus(selectedRow) }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="ssh-note-meta">
               <div>
                 <span class="ssh-note-meta-label">备注标题</span>
@@ -225,35 +256,6 @@ type SortMode = 'name' | 'updated' | 'environment' | 'project'
               <div>
                 <span class="ssh-note-meta-label">Profile ID</span>
                 <span class="ssh-notes-data-path">{{ selectedRow.profileId }}</span>
-              </div>
-            </div>
-
-            <div class="ssh-note-baota" *ngIf="hasBaota(selectedRow.note)">
-              <div class="ssh-note-baota-title">宝塔面板</div>
-              <div class="ssh-note-meta">
-                <div *ngIf="selectedRow.note.baotaUrl">
-                  <span class="ssh-note-meta-label">面板链接</span>
-                  <span class="ssh-notes-data-path">{{ selectedRow.note.baotaUrl }}</span>
-                </div>
-                <div *ngIf="selectedRow.note.baotaUsername">
-                  <span class="ssh-note-meta-label">用户名</span>
-                  <span>{{ selectedRow.note.baotaUsername }}</span>
-                </div>
-                <div>
-                  <span class="ssh-note-meta-label">密码</span>
-                  <span>{{ baotaPasswordStatus(selectedRow) }}</span>
-                </div>
-              </div>
-              <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-sm btn-primary" [disabled]="!selectedRow.note.baotaUrl" (click)="openBaota(selectedRow)">
-                  <span class="fa fa-external-link me-1"></span>打开面板
-                </button>
-                <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaUsername" (click)="copyBaotaUsername(selectedRow)">
-                  复制用户名
-                </button>
-                <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaPasswordSet" (click)="copyBaotaPassword(selectedRow)">
-                  复制密码
-                </button>
               </div>
             </div>
           </ng-container>

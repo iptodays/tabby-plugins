@@ -16,6 +16,7 @@ export class NoteEditorService {
     let modalRef: NgbModalRef
     modalRef = this.ngbModal.open(NoteEditorModalComponent, {
       size: 'lg',
+      scrollable: true,
       keyboard: true,
       backdrop: true,
       beforeDismiss: () => modalRef?.componentInstance?.confirmClose() ?? true,
