@@ -62,6 +62,8 @@ export const SSH_NOTES_STYLES = `
     color: inherit;
     text-align: left;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .ssh-note-row:hover {
@@ -120,6 +122,8 @@ export const SSH_NOTES_STYLES = `
     padding: .9rem;
     min-width: 0;
     overflow: auto;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .ssh-note-detail-head {
@@ -193,6 +197,8 @@ export const SSH_NOTES_STYLES = `
 
 button.ssh-note-tag {
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 button.ssh-note-tag.active {
