@@ -8,8 +8,9 @@ import {
 } from '../models'
 import { SSHNotesService } from '../services/ssh-notes.service'
 import { ProfileActionsService } from '../services/profile-actions.service'
+import { BaotaCredentialsService } from '../services/baota-credentials.service'
 import { formatTerminalTitle } from '../title'
-import { isValidHexColor } from '../validation'
+import { isValidHexColor, normalizeBaotaUrl } from '../validation'
 import { SSH_NOTES_STYLES } from '../ui/styles'
 
 interface NoteDraft {
@@ -22,6 +23,11 @@ interface NoteDraft {
   color: string
   customTerminalTitle: string
   terminalTitleEnabled: boolean
+  baotaUrl: string
+  baotaUsername: string
+  baotaPassword: string
+  baotaPasswordSet: boolean
+  baotaClearPassword: boolean
 }
 
 @Component({
@@ -148,6 +154,61 @@ interface NoteDraft {
         <span class="hint">支持多行；内容不会被当作命令执行。</span>
       </div>
 
+      <div class="ssh-notes-section">
+        <h4>宝塔面板</h4>
+        <div class="section-desc">保存面板链接、用户名和密码；密码不会写入 config.yaml 或导出文件。</div>
+
+        <div class="ssh-notes-form-grid">
+          <div class="field">
+            <label for="ssh-note-baota-url">面板链接</label>
+            <input
+              id="ssh-note-baota-url"
+              class="form-control"
+              type="text"
+              maxlength="500"
+              placeholder="https://1.2.3.4:8888/"
+              [(ngModel)]="draft.baotaUrl"
+              (ngModelChange)="markDirty()"
+            >
+            <span class="hint">支持 http/https；省略协议时按 http 处理。</span>
+          </div>
+
+          <div class="field">
+            <label for="ssh-note-baota-username">用户名</label>
+            <input
+              id="ssh-note-baota-username"
+              class="form-control"
+              type="text"
+              maxlength="100"
+              placeholder="宝塔面板用户名"
+              [(ngModel)]="draft.baotaUsername"
+              (ngModelChange)="markDirty()"
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ssh-note-baota-password">密码</label>
+          <div class="d-flex gap-2">
+            <input
+              id="ssh-note-baota-password"
+              class="form-control"
+              type="password"
+              maxlength="500"
+              autocomplete="new-password"
+              [placeholder]="draft.baotaPasswordSet ? '已保存，留空保持不变' : '输入宝塔密码'"
+              [(ngModel)]="draft.baotaPassword"
+              (ngModelChange)="onBaotaPasswordChange()"
+            >
+            <button type="button" class="btn btn-sm btn-secondary" *ngIf="draft.baotaPasswordSet" (click)="clearBaotaPassword()">
+              清除
+            </button>
+          </div>
+          <span class="hint" *ngIf="vaultEnabled">密码保存在 Tabby 保险库中，复制时按需解锁。</span>
+          <span class="hint" *ngIf="!vaultEnabled">未启用 Tabby 保险库：密码只保存在本次运行内存，重启后失效。可在 Settings → Vault 启用。</span>
+        </div>
+      </div>
+
       <div class="field">
         <span class="field-label">标签</span>
         <div class="ssh-note-tags" *ngIf="draft.tags.length">
@@ -224,6 +285,11 @@ export class NoteFormComponent implements OnInit, OnChanges {
     color: '',
     customTerminalTitle: '',
     terminalTitleEnabled: true,
+    baotaUrl: '',
+    baotaUsername: '',
+    baotaPassword: '',
+    baotaPasswordSet: false,
+    baotaClearPassword: false,
   }
   tagDraft = ''
   allTags: string[] = []
@@ -241,6 +307,7 @@ export class NoteFormComponent implements OnInit, OnChanges {
     private notes: SSHNotesService,
     private profileActions: ProfileActionsService,
     private platform: PlatformService,
+    private credentials: BaotaCredentialsService,
   ) {}
 
   ngOnInit (): void {
@@ -259,6 +326,10 @@ export class NoteFormComponent implements OnInit, OnChanges {
 
   get environmentFallbackColor (): string {
     return environmentColor(this.draft.environment)
+  }
+
+  get vaultEnabled (): boolean {
+    return this.credentials.isEncryptionEnabled()
   }
 
   get titlePreview (): string {
@@ -281,6 +352,11 @@ export class NoteFormComponent implements OnInit, OnChanges {
       color: source.color,
       customTerminalTitle: source.customTerminalTitle,
       terminalTitleEnabled: source.terminalTitleEnabled,
+      baotaUrl: source.baotaUrl ?? '',
+      baotaUsername: source.baotaUsername ?? '',
+      baotaPassword: '',
+      baotaPasswordSet: source.baotaPasswordSet === true,
+      baotaClearPassword: false,
     }
     this.tagDraft = ''
     this.allTags = this.notes.getAllTags()
@@ -301,6 +377,9 @@ export class NoteFormComponent implements OnInit, OnChanges {
       color: this.draft.color.trim(),
       customTerminalTitle: this.draft.customTerminalTitle.trim(),
       terminalTitleEnabled: this.draft.terminalTitleEnabled,
+      baotaUrl: this.draft.baotaUrl.trim(),
+      baotaUsername: this.draft.baotaUsername.trim(),
+      baotaPasswordSet: this.draft.baotaPasswordSet,
       createdAt: base?.createdAt ?? now,
       updatedAt: now,
     }
@@ -332,6 +411,18 @@ export class NoteFormComponent implements OnInit, OnChanges {
 
   clearColor (): void {
     this.draft.color = ''
+    this.markDirty()
+  }
+
+  onBaotaPasswordChange (): void {
+    this.draft.baotaClearPassword = false
+    this.markDirty()
+  }
+
+  clearBaotaPassword (): void {
+    this.draft.baotaPassword = ''
+    this.draft.baotaPasswordSet = false
+    this.draft.baotaClearPassword = true
     this.markDirty()
   }
 
@@ -394,6 +485,20 @@ export class NoteFormComponent implements OnInit, OnChanges {
     if (this.draft.customTerminalTitle.length > 120) {
       errors.push('自定义终端标题不能超过 120 个字符。')
     }
+    if (this.draft.baotaUrl.length > 500) {
+      errors.push('宝塔面板链接不能超过 500 个字符。')
+    } else if (this.draft.baotaUrl.trim() && !normalizeBaotaUrl(this.draft.baotaUrl).url) {
+      errors.push('宝塔面板链接格式无效，仅支持 http/https。')
+    }
+    if (this.draft.baotaUsername.length > 100) {
+      errors.push('宝塔用户名不能超过 100 个字符。')
+    }
+    if (this.draft.baotaPassword.length > 500) {
+      errors.push('宝塔密码不能超过 500 个字符。')
+    }
+    if (this.draft.baotaPassword && !this.draft.baotaUrl.trim() && !this.draft.baotaUsername.trim()) {
+      errors.push('填写宝塔密码前请先填写面板链接或用户名。')
+    }
     if (!this.profileId) {
       errors.push('缺少稳定的 SSH Profile ID，无法保存备注。')
     }
@@ -411,6 +516,15 @@ export class NoteFormComponent implements OnInit, OnChanges {
     }
     this.saving = true
     try {
+      let baotaPasswordSet = this.draft.baotaPasswordSet
+      const hasBaotaTarget = !!this.draft.baotaUrl.trim() || !!this.draft.baotaUsername.trim()
+      if (!hasBaotaTarget || this.draft.baotaClearPassword) {
+        await this.credentials.deletePassword(this.profileId)
+        baotaPasswordSet = false
+      } else if (this.draft.baotaPassword) {
+        await this.credentials.savePassword(this.profileId, this.draft.baotaPassword)
+        baotaPasswordSet = true
+      }
       const result = await this.notes.saveNote(this.profileId, {
         title: this.draft.title,
         description: this.draft.description,
@@ -421,8 +535,17 @@ export class NoteFormComponent implements OnInit, OnChanges {
         color: this.draft.color,
         customTerminalTitle: this.draft.customTerminalTitle,
         terminalTitleEnabled: this.draft.terminalTitleEnabled,
+        baotaUrl: this.draft.baotaUrl,
+        baotaUsername: this.draft.baotaUsername,
+        baotaPasswordSet,
       })
+      if (!result) {
+        await this.credentials.deletePassword(this.profileId)
+      }
       this.note = result
+      this.draft.baotaPassword = ''
+      this.draft.baotaPasswordSet = !!result && baotaPasswordSet
+      this.draft.baotaClearPassword = false
       this.setDirty(false)
       this.saved.emit(result)
     } catch (error) {
@@ -442,7 +565,11 @@ export class NoteFormComponent implements OnInit, OnChanges {
     this.saving = true
     try {
       await this.notes.deleteNote(this.profileId)
+      await this.credentials.deletePassword(this.profileId)
       this.note = null
+      this.draft.baotaPassword = ''
+      this.draft.baotaPasswordSet = false
+      this.draft.baotaClearPassword = false
       this.setDirty(false)
       this.saved.emit(null)
     } catch (error) {

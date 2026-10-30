@@ -53,6 +53,7 @@ const MAX_SHORT_TEXT = 100
 const MAX_TAGS = 20
 const MAX_TAG_LENGTH = 32
 const MAX_COLOR = 7
+const MAX_URL = 500
 
 function isRecord (value: unknown): value is Record<string, any> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -86,6 +87,29 @@ export function truncateUnicode (value: string, maxLength: number): string {
 
 export function isValidHexColor (value: string): boolean {
   return /^#[0-9a-fA-F]{6}$/.test(value)
+}
+
+export function normalizeBaotaUrl (value: unknown): { url: string, warning?: string } {
+  const raw = safeString(value).trim()
+  if (!raw) {
+    return { url: '' }
+  }
+  let candidate = raw
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(candidate)) {
+    candidate = `http://${candidate}`
+  }
+  if (Array.from(candidate).length > MAX_URL) {
+    return { url: '', warning: '宝塔链接过长，已清空' }
+  }
+  try {
+    const parsed = new URL(candidate)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return { url: '', warning: '宝塔链接只支持 http/https，已清空' }
+    }
+    return { url: candidate }
+  } catch {
+    return { url: '', warning: '宝塔链接格式无效，已清空' }
+  }
 }
 
 export function normalizeEnvironment (value: unknown): SSHNoteEnvironment {
@@ -219,6 +243,17 @@ export function sanitizeNote (
     ? raw.terminalTitleEnabled
     : true
 
+  const baotaUrlResult = normalizeBaotaUrl(raw.baotaUrl)
+  if (baotaUrlResult.warning) {
+    warnings.push(baotaUrlResult.warning)
+  }
+
+  let baotaUsername = safeString(raw.baotaUsername).trim()
+  if (baotaUsername.length > MAX_SHORT_TEXT) {
+    baotaUsername = truncateUnicode(baotaUsername, MAX_SHORT_TEXT)
+    warnings.push('宝塔用户名过长，已截断')
+  }
+
   const createdAt = normalizeTimestamp(raw.createdAt, timestamp)
   const updatedAt = normalizeTimestamp(raw.updatedAt, createdAt)
 
@@ -232,6 +267,9 @@ export function sanitizeNote (
     color,
     customTerminalTitle,
     terminalTitleEnabled,
+    baotaUrl: baotaUrlResult.url,
+    baotaUsername,
+    baotaPasswordSet: raw.baotaPasswordSet === true,
     createdAt,
     updatedAt: updatedAt < createdAt ? createdAt : updatedAt,
   }

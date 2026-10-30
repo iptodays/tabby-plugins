@@ -6,7 +6,7 @@
 
 | 插件 | 版本 | 说明 |
 | --- | --- | --- |
-| [tabby-ssh-notes](ssh-notes/README.md) | 0.1.0 | 为 SSH 连接提供本地备注、环境与标签管理、终端标签标题集成，以及 JSON 导入导出。 |
+| [tabby-ssh-notes](ssh-notes/README.md) | 0.1.0 | 为 SSH 连接提供本地备注、环境与标签管理、宝塔面板快捷登录、终端标签标题集成，以及 JSON 导入导出。 |
 
 当前仓库只包含 `tabby-ssh-notes`，后续插件会以独立目录加入。
 

@@ -142,5 +142,6 @@ Remove-Item (Join-Path $env:APPDATA 'tabby\plugins\node_modules\tabby-ssh-notes'
 - 不需要管理员权限。
 - 不需要关闭 Windows Defender。
 - 不需要修改 PowerShell 执行策略；开发脚本通过单次 `-ExecutionPolicy Bypass` 运行。
-- 插件不读取 SSH 密码、私钥或 vault。
-- 插件只写入 Tabby 配置文件和用户选择的导出文件。
+- 插件不读取 SSH 密码或私钥，也不读取保险库中的 SSH 凭据。
+- 宝塔面板密码只写入本插件自己的 `ssh-notes-baota` 保险库条目；未启用 Tabby 保险库时仅保存在内存。
+- 插件只写入 Tabby 配置文件、Tabby 保险库和用户选择的导出文件；导出文件不包含宝塔密码。

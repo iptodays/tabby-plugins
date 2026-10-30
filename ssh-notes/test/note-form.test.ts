@@ -16,6 +16,9 @@ function makeForm (overrides: { note?: SSHNote | null, saveResult?: SSHNote | nu
       color: '',
       customTerminalTitle: '',
       terminalTitleEnabled: true,
+      baotaUrl: '',
+      baotaUsername: '',
+      baotaPasswordSet: false,
       createdAt: '2026-10-23T00:00:00.000Z',
       updatedAt: '2026-10-23T00:00:00.000Z',
     }),
@@ -27,11 +30,16 @@ function makeForm (overrides: { note?: SSHNote | null, saveResult?: SSHNote | nu
   const platform = {
     showMessageBox: jest.fn(async () => ({ response: 0 })),
   }
-  const form = new NoteFormComponent(notes as any, actions as any, platform as any)
+  const credentials = {
+    isEncryptionEnabled: () => false,
+    savePassword: jest.fn(async () => 'memory'),
+    deletePassword: jest.fn(async () => undefined),
+  }
+  const form = new NoteFormComponent(notes as any, actions as any, platform as any, credentials as any)
   form.profileId = 'ssh:custom:test:1'
   form.note = overrides.note ?? null
   form.ngOnInit()
-  return { form, notes, platform }
+  return { form, notes, platform, credentials }
 }
 
 describe('NoteFormComponent', () => {
@@ -107,6 +115,9 @@ describe('NoteFormComponent', () => {
       color: '',
       customTerminalTitle: '',
       terminalTitleEnabled: true,
+      baotaUrl: '',
+      baotaUsername: '',
+      baotaPasswordSet: false,
       createdAt: '2026-10-23T00:00:00.000Z',
       updatedAt: '2026-10-23T00:00:00.000Z',
     }
@@ -122,5 +133,21 @@ describe('NoteFormComponent', () => {
     const { form } = makeForm()
     form.draft.title = 'API 主节点'
     expect(form.titlePreview).toBe('[生产] API 主节点')
+  })
+
+  test('saves BaoTa fields and stores the password separately', async () => {
+    const { form, notes, credentials } = makeForm()
+    form.draft.baotaUrl = '1.2.3.4:8888'
+    form.draft.baotaUsername = 'admin'
+    form.draft.baotaPassword = 'panel-password'
+
+    await form.save()
+
+    expect(credentials.savePassword).toHaveBeenCalledWith('ssh:custom:test:1', 'panel-password')
+    expect(notes.saveNote).toHaveBeenCalledWith('ssh:custom:test:1', expect.objectContaining({
+      baotaUrl: '1.2.3.4:8888',
+      baotaUsername: 'admin',
+      baotaPasswordSet: true,
+    }))
   })
 })

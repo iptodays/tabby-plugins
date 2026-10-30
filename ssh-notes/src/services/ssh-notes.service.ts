@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, Optional } from '@angular/core'
 import { BehaviorSubject, Subject } from 'rxjs'
 import {
   ConfigService,
@@ -8,6 +8,7 @@ import {
   NotificationsService,
   PlatformService,
 } from 'tabby-core'
+import { BaotaCredentialsService } from './baota-credentials.service'
 import {
   CURRENT_SCHEMA_VERSION,
   ImportMode,
@@ -58,6 +59,7 @@ export class SSHNotesService {
     private platform: PlatformService,
     private notifications: NotificationsService,
     log: LogService,
+    @Optional() private baota?: BaotaCredentialsService,
   ) {
     this.logger = log.create('ssh-notes')
     this.config.changed$.subscribe(() => this.onConfigChanged())
@@ -193,6 +195,19 @@ export class SSHNotesService {
     }
   }
 
+  private async deleteBaotaSecrets (profileIds: string[]): Promise<void> {
+    if (!this.baota || !profileIds.length) {
+      return
+    }
+    for (const profileId of profileIds) {
+      try {
+        await this.baota.deletePassword(profileId)
+      } catch (error) {
+        this.logger.warn(`Could not delete BaoTa password for ${profileId}`, error)
+      }
+    }
+  }
+
   private async persist (): Promise<void> {
     this.assertWritable()
     this.revision++
@@ -291,6 +306,7 @@ export class SSHNotesService {
       this.writeRoot()
       this.emit()
       await this.persist()
+      await this.deleteBaotaSecrets([profileId])
       return null
     }
 
@@ -311,16 +327,19 @@ export class SSHNotesService {
     this.writeRoot()
     this.emit()
     await this.persist()
+    await this.deleteBaotaSecrets([profileId])
   }
 
   async clearAllNotes (): Promise<void> {
     await this.ready()
     this.assertWritable()
     await this.createBackup('before-clear-all')
+    const profileIds = [...this.notes.keys()]
     this.notes.clear()
     this.writeRoot()
     this.emit()
     await this.persist()
+    await this.deleteBaotaSecrets(profileIds)
   }
 
   async updateSettings (patch: Partial<SSHNotesSettings>): Promise<void> {
@@ -374,17 +393,26 @@ export class SSHNotesService {
     if (!this.backup) {
       throw new Error('没有可恢复的备份。')
     }
+    const previousIds = new Set(this.notes.keys())
     this.notes = new Map(Object.entries(cloneNotes(this.backup.notes)))
+    for (const note of this.notes.values()) {
+      note.baotaPasswordSet = false
+    }
     this.writeRoot()
     this.emit()
     await this.persist()
+    await this.deleteBaotaSecrets([...previousIds].filter(profileId => !this.notes.has(profileId)))
   }
 
   exportDocument (): SSHNotesExport {
+    const notes = this.notesToRecord()
+    for (const note of Object.values(notes)) {
+      note.baotaPasswordSet = false
+    }
     return {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
-      notes: this.notesToRecord(),
+      notes,
     }
   }
 
@@ -446,6 +474,8 @@ export class SSHNotesService {
     await this.ready()
     this.assertWritable()
     await this.createBackup(`before-import-${mode}`)
+    const previousIds = new Set(this.notes.keys())
+    const previousFlags = new Map([...this.notes.entries()].map(([profileId, note]) => [profileId, note.baotaPasswordSet]))
     if (mode === 'replace') {
       this.notes = new Map(Object.entries(cloneNotes(document.notes)))
     } else {
@@ -456,9 +486,15 @@ export class SSHNotesService {
         }
       }
     }
+    for (const [profileId, note] of this.notes.entries()) {
+      note.baotaPasswordSet = previousFlags.get(profileId) ?? false
+    }
     this.writeRoot()
     this.emit()
     await this.persist()
+    if (mode === 'replace') {
+      await this.deleteBaotaSecrets([...previousIds].filter(profileId => !this.notes.has(profileId)))
+    }
   }
 
   getDataPath (): string | null {

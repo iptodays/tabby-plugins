@@ -12,6 +12,9 @@ function note (title: string, overrides: Partial<SSHNote> = {}): SSHNote {
     color: '',
     customTerminalTitle: '',
     terminalTitleEnabled: true,
+    baotaUrl: '',
+    baotaUsername: '',
+    baotaPasswordSet: false,
     createdAt: '2026-10-23T00:00:00.000Z',
     updatedAt: '2026-10-23T00:00:00.000Z',
     ...overrides,
@@ -37,6 +40,11 @@ function makePanel () {
     {} as any,
     {} as any,
     {} as any,
+    {
+      isEncryptionEnabled: () => false,
+      hasInMemoryPassword: () => false,
+      getPassword: jest.fn(async () => null),
+    } as any,
   )
   panel.rows = [
     {

@@ -31,6 +31,7 @@ src/
   title.ts                         终端标题与列表标题生成
   services/
     ssh-notes.service.ts           数据源、保存队列、备份、导入导出
+    baota-credentials.service.ts   宝塔密码（Tabby 保险库 / 内存回退）
     profile-actions.service.ts     SSH Profile 查询、连接、原生编辑
     note-editor.service.ts         打开备注编辑弹窗
   decorators/
@@ -61,6 +62,9 @@ interface SSHNote {
   color: string              // #RRGGBB 或空
   customTerminalTitle: string
   terminalTitleEnabled: boolean
+  baotaUrl: string            // 宝塔面板链接（http/https）
+  baotaUsername: string
+  baotaPasswordSet: boolean   // 是否在保险库/内存中保存了密码
   createdAt: string          // ISO 8601
   updatedAt: string
 }
@@ -156,6 +160,24 @@ Settings → 导入
 
 `ConfigService.changed$` 可能来自原生 Profile 编辑、其他窗口或手动 Config 编辑。服务在 100 ms 防抖后重新读取 `config.store.sshNotes`，更新缓存并发出 `changed$`。自身保存期间跳过重载，避免覆盖正在写入的内存状态。
 
+### 4.6 宝塔密码
+
+```text
+备注编辑器保存
+  → BaotaCredentialsService.savePassword(profileId, password)
+      ├─ Tabby 保险库已启用：vault.addSecret(type: ssh-notes-baota, key: { id })
+      └─ 未启用：仅写入本次运行内存
+  → 备注只保存 baotaUrl / baotaUsername / baotaPasswordSet
+  → config.yaml 与导出 JSON 不包含密码
+
+备注详情“复制密码”
+  → BaotaCredentialsService.getPassword(profileId)
+  → 从保险库按需解锁读取，或读取内存
+  → PlatformService.setClipboard()
+```
+
+删除备注、清空全部备注或删除替换导入中移除的连接时，插件会尝试删除对应的保险库条目。
+
 ## 5. 并发与一致性
 
 - 内存缓存是 UI 的读取来源，避免每次终端输出读取磁盘。
@@ -168,7 +190,8 @@ Settings → 导入
 ## 6. 安全边界
 
 - 备注只作为 Angular 插值文本渲染，不调用 `innerHTML`，不执行。
-- 不读取 `PasswordStorageService`、private key 或 vault。
+- 宝塔密码不写入备注数据；启用 Tabby 保险库时加密保存，未启用时只存在内存。
+- 不读取 `PasswordStorageService`、private key 或 vault 中的 SSH 凭据；只读写本插件自己的 `ssh-notes-baota` 类型条目。
 - 不发起网络请求。
 - 导入 JSON 校验根节点、schemaVersion、notes 类型、字段类型、颜色、标签数量。
 - 导入数据只写入备注节点。

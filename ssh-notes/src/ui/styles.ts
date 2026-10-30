@@ -176,6 +176,17 @@ export const SSH_NOTES_STYLES = `
     font-size: .78rem;
 }
 
+.ssh-note-baota {
+    border-top: 1px solid var(--theme-bg-more-2);
+    margin-top: .85rem;
+    padding-top: .7rem;
+}
+
+.ssh-note-baota-title {
+    font-weight: 600;
+    margin-bottom: .35rem;
+}
+
 .ssh-note-tags {
     display: flex;
     flex-wrap: wrap;

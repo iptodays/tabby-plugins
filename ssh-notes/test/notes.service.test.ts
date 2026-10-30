@@ -22,7 +22,7 @@ class FakeConfig {
   }
 }
 
-function createService () {
+function createService (baota?: any) {
   const config = new FakeConfig()
   const platform = {
     getConfigPath: () => 'C:\\Users\\test\\AppData\\Roaming\\tabby\\config.yaml',
@@ -42,7 +42,7 @@ function createService () {
       debug: jest.fn(),
     }),
   }
-  const service = new SSHNotesService(config as any, platform as any, notifications as any, log as any)
+  const service = new SSHNotesService(config as any, platform as any, notifications as any, log as any, baota)
   return { service, config, platform, notifications }
 }
 
@@ -220,5 +220,38 @@ describe('SSHNotesService', () => {
     await service.ready()
     expect(service.getDataPath()).toContain('config.yaml')
     expect(service.getDataSection()).toBe('sshNotes')
+  })
+
+  test('keeps BaoTa password out of exports and removes it with the note', async () => {
+    const baota = { deletePassword: jest.fn(async () => undefined) }
+    const { service } = createService(baota)
+    await service.ready()
+    await service.saveNote('id', {
+      title: '面板',
+      baotaUrl: '1.2.3.4:8888',
+      baotaUsername: 'admin',
+      baotaPasswordSet: true,
+    })
+
+    const document = service.exportDocument()
+    expect(document.notes.id.baotaUrl).toBe('http://1.2.3.4:8888')
+    expect(document.notes.id.baotaPasswordSet).toBe(false)
+
+    await service.deleteNote('id')
+    expect(baota.deletePassword).toHaveBeenCalledWith('id')
+  })
+
+  test('clears BaoTa password entries when clearing all notes', async () => {
+    const baota = { deletePassword: jest.fn(async () => undefined) }
+    const { service } = createService(baota)
+    await service.ready()
+    await service.saveNote('a', { title: 'A', baotaUsername: 'admin', baotaPasswordSet: true })
+    await service.saveNote('b', { title: 'B', baotaUsername: 'root', baotaPasswordSet: true })
+
+    await service.clearAllNotes()
+
+    expect(baota.deletePassword).toHaveBeenCalledTimes(2)
+    expect(baota.deletePassword).toHaveBeenCalledWith('a')
+    expect(baota.deletePassword).toHaveBeenCalledWith('b')
   })
 })

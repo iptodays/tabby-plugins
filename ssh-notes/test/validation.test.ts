@@ -5,6 +5,7 @@
 } from '../src/models'
 import {
   migrateConfig,
+  normalizeBaotaUrl,
   normalizeTags,
   parseImportDocument,
   sanitizeNote,
@@ -24,6 +25,9 @@ function note (overrides: Partial<SSHNote> = {}): SSHNote {
     color: '#E05252',
     customTerminalTitle: '',
     terminalTitleEnabled: true,
+    baotaUrl: '',
+    baotaUsername: '',
+    baotaPasswordSet: false,
     createdAt: '2026-10-23T00:00:00.000Z',
     updatedAt: '2026-10-23T00:00:00.000Z',
     ...overrides,
@@ -159,5 +163,24 @@ describe('validation', () => {
     const result = parseImportDocument(JSON.stringify({ schemaVersion: 1 }))
     expect(result.document).toBeNull()
     expect(result.errors.some(e => e.includes('缺少 notes'))).toBe(true)
+  })
+
+  test('normalizes BaoTa panel URLs', () => {
+    expect(normalizeBaotaUrl('1.2.3.4:8888').url).toBe('http://1.2.3.4:8888')
+    expect(normalizeBaotaUrl('panel.example.com:8888').url).toBe('http://panel.example.com:8888')
+    expect(normalizeBaotaUrl(' https://panel.example.com/ ').url).toBe('https://panel.example.com/')
+    expect(normalizeBaotaUrl('file:///etc/passwd').url).toBe('')
+    expect(normalizeBaotaUrl('not a url').url).toBe('')
+  })
+
+  test('keeps BaoTa fields on a note and rejects unsupported URL schemes', () => {
+    const result = sanitizeNote({
+      ...note(),
+      baotaUrl: 'ftp://panel.example.com',
+      baotaUsername: 'admin',
+    })
+    expect(result.note!.baotaUrl).toBe('')
+    expect(result.note!.baotaUsername).toBe('admin')
+    expect(result.warnings.some(w => w.includes('http/https'))).toBe(true)
   })
 })

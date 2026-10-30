@@ -135,6 +135,8 @@ npm run doctor -- -TabbyExe "<Tabby 安装目录>\Tabby.exe"
 
 导入/导出使用 Tabby 官方的 `PlatformService.startUpload()` / `startDownload()`。在 Electron 中会弹出系统文件对话框。若对话框未出现，检查是否有其他模态窗口阻塞。
 
+宝塔密码不包含在导出文件中。它通过 `VaultService` 保存；测试持久化前先在 **Settings → Vault** 启用保险库。未启用时密码只保存在本次运行内存中。
+
 ### 5.5 数据恢复
 
 - `%APPDATA%\tabby\config.yaml.backup`：Tabby 上一次保存的完整配置备份。

@@ -33,6 +33,13 @@ export class ProfilesService {}
 
 export class AppService {}
 
+export class VaultService {
+  isEnabled = jest.fn(() => false)
+  getSecret = jest.fn(async () => null)
+  addSecret = jest.fn(async () => undefined)
+  removeSecret = jest.fn(async () => undefined)
+}
+
 export class ToolbarButtonProvider {}
 
 export class TabContextMenuItemProvider {}

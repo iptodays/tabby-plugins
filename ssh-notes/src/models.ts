@@ -48,6 +48,9 @@ export interface SSHNote {
   color: string
   customTerminalTitle: string
   terminalTitleEnabled: boolean
+  baotaUrl: string
+  baotaUsername: string
+  baotaPasswordSet: boolean
   createdAt: string
   updatedAt: string
 }
@@ -62,6 +65,9 @@ export interface NoteInput {
   color?: string
   customTerminalTitle?: string
   terminalTitleEnabled?: boolean
+  baotaUrl?: string
+  baotaUsername?: string
+  baotaPasswordSet?: boolean
 }
 
 export interface SSHNotesSettings {
@@ -141,12 +147,14 @@ export function environmentColor (environment: SSHNoteEnvironment): string {
   return ENVIRONMENT_COLORS[environment] ?? ENVIRONMENT_COLORS.other
 }
 
-export function isNoteEmpty (note: Pick<SSHNote, 'title' | 'description' | 'project' | 'owner' | 'tags' | 'customTerminalTitle'>): boolean {
+export function isNoteEmpty (note: Pick<SSHNote, 'title' | 'description' | 'project' | 'owner' | 'tags' | 'customTerminalTitle' | 'baotaUrl' | 'baotaUsername'>): boolean {
   return !note.title.trim() &&
     !note.description.trim() &&
     !note.project.trim() &&
     !note.owner.trim() &&
     !note.customTerminalTitle.trim() &&
+    !note.baotaUrl.trim() &&
+    !note.baotaUsername.trim() &&
     note.tags.length === 0
 }
 
@@ -162,6 +170,9 @@ export function createEmptyNote (environment: SSHNoteEnvironment, now = new Date
     color: '',
     customTerminalTitle: '',
     terminalTitleEnabled: true,
+    baotaUrl: '',
+    baotaUsername: '',
+    baotaPasswordSet: false,
     createdAt: timestamp,
     updatedAt: timestamp,
   }

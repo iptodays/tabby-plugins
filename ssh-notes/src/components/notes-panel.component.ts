@@ -18,6 +18,7 @@ import {
 import { SSHNotesService } from '../services/ssh-notes.service'
 import { ProfileActionsService } from '../services/profile-actions.service'
 import { NoteEditorService } from '../services/note-editor.service'
+import { BaotaCredentialsService } from '../services/baota-credentials.service'
 import { formatListTitle } from '../title'
 import { SSH_NOTES_STYLES } from '../ui/styles'
 
@@ -226,6 +227,35 @@ type SortMode = 'name' | 'updated' | 'environment' | 'project'
                 <span class="ssh-notes-data-path">{{ selectedRow.profileId }}</span>
               </div>
             </div>
+
+            <div class="ssh-note-baota" *ngIf="hasBaota(selectedRow.note)">
+              <div class="ssh-note-baota-title">宝塔面板</div>
+              <div class="ssh-note-meta">
+                <div *ngIf="selectedRow.note.baotaUrl">
+                  <span class="ssh-note-meta-label">面板链接</span>
+                  <span class="ssh-notes-data-path">{{ selectedRow.note.baotaUrl }}</span>
+                </div>
+                <div *ngIf="selectedRow.note.baotaUsername">
+                  <span class="ssh-note-meta-label">用户名</span>
+                  <span>{{ selectedRow.note.baotaUsername }}</span>
+                </div>
+                <div>
+                  <span class="ssh-note-meta-label">密码</span>
+                  <span>{{ baotaPasswordStatus(selectedRow) }}</span>
+                </div>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-primary" [disabled]="!selectedRow.note.baotaUrl" (click)="openBaota(selectedRow)">
+                  <span class="fa fa-external-link me-1"></span>打开面板
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaUsername" (click)="copyBaotaUsername(selectedRow)">
+                  复制用户名
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" [disabled]="!selectedRow.note.baotaPasswordSet" (click)="copyBaotaPassword(selectedRow)">
+                  复制密码
+                </button>
+              </div>
+            </div>
           </ng-container>
 
           <ng-template #noNote>
@@ -271,6 +301,7 @@ export class NotesPanelComponent extends BaseComponent implements OnInit {
     private noteEditor: NoteEditorService,
     private platform: PlatformService,
     private notifications: NotificationsService,
+    private credentials: BaotaCredentialsService,
   ) {
     super()
   }
@@ -480,6 +511,55 @@ export class NotesPanelComponent extends BaseComponent implements OnInit {
       return value
     }
     return date.toLocaleString()
+  }
+
+  hasBaota (note: SSHNote | null): boolean {
+    return !!note && (!!note.baotaUrl || !!note.baotaUsername)
+  }
+
+  baotaPasswordStatus (row: NoteRow): string {
+    if (!row.note?.baotaPasswordSet) {
+      return '未保存'
+    }
+    if (this.credentials.isEncryptionEnabled()) {
+      return '已保存'
+    }
+    return this.credentials.hasInMemoryPassword(row.profileId) ? '仅本次运行' : '需启用 Tabby 保险库'
+  }
+
+  openBaota (row: NoteRow): void {
+    if (!row.note?.baotaUrl) {
+      return
+    }
+    this.platform.openExternal(row.note.baotaUrl)
+  }
+
+  copyBaotaUsername (row: NoteRow): void {
+    const username = row.note?.baotaUsername
+    if (!username) {
+      this.notifications.notice('没有保存的宝塔用户名')
+      return
+    }
+    this.platform.setClipboard({ text: username })
+    this.notifications.notice('宝塔用户名已复制')
+  }
+
+  async copyBaotaPassword (row: NoteRow): Promise<void> {
+    if (!row.note?.baotaPasswordSet) {
+      this.notifications.notice('没有保存的宝塔密码')
+      return
+    }
+    try {
+      const password = await this.credentials.getPassword(row.profileId)
+      if (!password) {
+        this.notifications.error('无法读取宝塔密码，请检查 Tabby 保险库是否已启用并解锁。')
+        return
+      }
+      this.platform.setClipboard({ text: password })
+      this.notifications.notice('宝塔密码已复制')
+    } catch (error) {
+      this.setError(error)
+    }
   }
 
   async edit (row: NoteRow): Promise<void> {
